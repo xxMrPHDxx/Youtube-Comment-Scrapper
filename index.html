@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Youtube Scrapper</title>
+</head>
+<body>
+	<div>
+		Video ID: <input id="videoId" type="text" name="videoId" placeholder="Youtube Video ID" value="k_bDAOhJdb4"><br>
+		<button onclick="scrapYoutube()">Scrap YouTube!</button><br>
+		<input id="Progress" type="range" min=0 name="progress"><br>
+		<span id="DCur"></span><span id="DTot"></span><br>
+		<textarea id="Output" cols=100 rows=200></textarea>
+	<div>
+	<script type="text/javascript">
+		const api_key = "AIzaSyDBQgH-5-jI27RT-_nUgd08CkuDOC8Hnsc";
+		function getCommentCount(api_key, videoId){
+			return fetch(`https://www.googleapis.com/youtube/v3/videos?part=statistics&id=${videoId}` + 
+				`&key=${api_key}`)
+			.then(res=>res.json())
+			.then(obj=>obj.items[0].statistics.commentCount);
+		}
+
+		function scrap(api_key, videoId, nextPageToken=null, results=[], remain=null){
+			return fetch(`https://www.googleapis.com/youtube/v3/commentThreads?` + 
+				`part=snippet,replies` + 
+				`&maxResults=100` + 
+				`&videoId=${videoId}` + 
+				`&key=${api_key}` + 
+				(nextPageToken === null ? "" : `&nextPageToken=${nextPageToken}`))
+			.then(res=>res.json())
+			.then(async obj=>{
+				if(remain === null){
+					remain = await getCommentCount(api_key, videoId);
+					document.querySelector('#Progress').max = remain;
+				}
+				console.log(`Got: ${results.length} items, Remaining: ${remain} items`);
+				const output =  document.querySelector('textarea#Output');
+				output.value = "";	
+				for(let item of obj.items){
+					if(remain > 0){
+						const data = {
+							id: item.id,
+							author: item.snippet.topLevelComment.snippet.authorDisplayName,
+							comment: item.snippet.topLevelComment.snippet.textOriginal.replace(/\"/g,"\\\"").replace(/\,/g,"\\\,")
+						};
+						results.push(data);
+
+						output.value += `${data.id},${data.author},${data.comment}\n`;
+
+						remain--;
+						document.querySelector('#Progress').value = document.querySelector('#Progress').max - remain + 1;
+					}
+				}
+				return Promise.resolve(obj.nextPageToken);
+			})
+			.then(async nextPageToken=>{
+				if(typeof nextPageToken === 'undefined' || remain <= 0){
+					return Promise.resolve(results);
+				}else{
+					let nextResults = await scrap(api_key, videoId, nextPageToken, results, remain);
+					return Promise.resolve(nextResults);
+				}
+			});
+		}
+
+		// scrap(api_key, "4wH878t78bw")
+		// .then(results=>{
+		// 	const output =  document.querySelector('textarea#Output');
+		// 	output.value = '';
+		// 	for(let comment of results){
+		// 		const id = comment.id;
+		// 		const author = comment.author;
+		//		const value = comment.comment.replace(/\,/g,"\\\,");
+		// 		output.value += `${id},${author},${value}\n`;
+		// 	}
+		// });
+
+		function scrapYoutube(){
+			const videoId = document.querySelector('input#videoId').value;
+			scrap(api_key, videoId)
+			// .then(results=>{
+			// 	console.log(results);
+			// 	const output =  document.querySelector('textarea#Output');
+			// 	output.value = JSON.stringify(results);
+			// });
+			// .then(downloadCSV)
+			// .then(downloadJSON)
+			// .then(console.log)
+			.catch(console.error);
+		}
+
+		function downloadJSON(obj){
+			let a = document.createElement('a');
+			const blob = new Blob([JSON.stringify(obj)], {type:'application/json'});
+			a.href = URL.createObjectURL(blob);
+			a.download = "Result.json";
+			a.click();
+		}
+
+		function downloadCSV(obj){
+			let a = document.createElement('a');
+			let blob;
+			if(obj instanceof Array){
+				let text = "";
+				document.querySelector("#DTot").innerText = obj.length;
+				for(let line of obj){
+					if(typeof line === 'object'){
+						for(let prop in line){
+							text += `${line[prop]},`;
+						}
+						text = text.substring(0,text.length-1);
+					}
+					text += "\n";
+					document.querySelector("#DCur").innerText = document.querySelector("#DCur").innerText + 1;
+				}
+				blob = new Blob([text], {type:'text/csv'});
+				a.href = URL.createObjectURL(blob);
+				a.download = "Result.csv";
+				a.click();
+			}
+		}
+	</script>
+</body>
+</html>
