@@ -35,7 +35,6 @@
 				}
 				console.log(`Got: ${results.length} items, Remaining: ${remain} items`);
 				const output =  document.querySelector('textarea#Output');
-				output.value = "";	
 				for(let item of obj.items){
 					if(remain > 0){
 						const data = {
@@ -77,6 +76,8 @@
 
 		function scrapYoutube(){
 			const videoId = document.querySelector('input#videoId').value;
+			const output =  document.querySelector('textarea#Output');
+			output.value = "";	
 			scrap(api_key, videoId)
 			// .then(results=>{
 			// 	console.log(results);
