@@ -84,7 +84,7 @@
 			// 	const output =  document.querySelector('textarea#Output');
 			// 	output.value = JSON.stringify(results);
 			// });
-			// .then(downloadCSV)
+			.then(downloadCSV)
 			// .then(downloadJSON)
 			// .then(console.log)
 			.catch(console.error);
@@ -104,6 +104,7 @@
 			if(obj instanceof Array){
 				let text = "";
 				document.querySelector("#DTot").innerText = obj.length;
+				document.querySelector("#DCur").innerText = 0;
 				for(let line of obj){
 					if(typeof line === 'object'){
 						for(let prop in line){
@@ -112,7 +113,7 @@
 						text = text.substring(0,text.length-1);
 					}
 					text += "\n";
-					document.querySelector("#DCur").innerText = document.querySelector("#DCur").innerText + 1;
+					document.querySelector("#DCur").innerText = parseInt(document.querySelector("#DCur").innerText) + 1;
 				}
 				blob = new Blob([text], {type:'text/csv'});
 				a.href = URL.createObjectURL(blob);
