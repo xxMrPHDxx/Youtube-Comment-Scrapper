@@ -8,7 +8,7 @@
 		Video ID: <input id="videoId" type="text" name="videoId" placeholder="Youtube Video ID" value="k_bDAOhJdb4"><br>
 		<button onclick="scrapYoutube()">Scrap YouTube!</button><br>
 		<input id="Progress" type="range" min=0 name="progress"><br>
-		<span id="DCur"></span><span id="DTot"></span><br>
+		<span id="DCur"></span>/<span id="DTot"></span><br>
 		<textarea id="Output" cols=100 rows=200></textarea>
 	<div>
 	<script type="text/javascript">
@@ -40,7 +40,7 @@
 						const data = {
 							id: item.id,
 							author: item.snippet.topLevelComment.snippet.authorDisplayName,
-							comment: item.snippet.topLevelComment.snippet.textOriginal.replace(/\"/g,"\\\"").replace(/\,/g,"\\\,")
+							comment: item.snippet.topLevelComment.snippet.textOriginal.replace(/\"/g,"\\\"").replace(/\,/g,"\\\,").replace(/\n/g," ")
 						};
 						results.push(data);
 
