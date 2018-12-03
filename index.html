@@ -2,15 +2,19 @@
 <html>
 <head>
 	<title>Youtube Scrapper</title>
+	<script type="text/javascript" src="comments.js"></script>
 </head>
 <body>
 	<div>
-		Video ID: <input id="videoId" type="text" name="videoId" placeholder="Youtube Video ID" value="k_bDAOhJdb4"><br>
+		<label for="videoId">Video ID: </label><input id="videoId" type="text" name="videoId" placeholder="Youtube Video ID" value="k_bDAOhJdb4"><br>
+		<font>When done:</font><br>
+		<input id="csv" type="checkbox" name="csv"><label for="csv">Download CSV</label>&nbsp;
+		<input id="json" type="checkbox" name="json"><label for="json">Download JSON</label><br>
 		<button onclick="scrapYoutube()">Scrap YouTube!</button><br>
 		<input id="Progress" type="range" min=0 name="progress"><br>
 		<span id="DCur"></span><span id="DTot"></span><br>
 		<textarea id="Output" cols=100 rows=200></textarea>
-	<div>
+	</div>
 	<script type="text/javascript">
 		const api_key = "AIzaSyDBQgH-5-jI27RT-_nUgd08CkuDOC8Hnsc";
 		function getCommentCount(api_key, videoId){
@@ -30,7 +34,7 @@
 			.then(res=>res.json())
 			.then(async obj=>{
 				if(remain === null){
-					remain = await getCommentCount(api_key, videoId);
+					remain = await getCommentCount(api_key, videoId)-1;
 					document.querySelector('#Progress').max = remain;
 				}
 				console.log(`Got: ${results.length} items, Remaining: ${remain} items`);
@@ -42,7 +46,8 @@
 							author: item.snippet.topLevelComment.snippet.authorDisplayName,
 							comment: item.snippet.topLevelComment.snippet.textOriginal.replace(/\"/g,"\\\"").replace(/\,/g,"\\\,")
 						};
-						results.push(data);
+						let comment = new Comment(data.id, data.author, data.comment);
+						results.push(comment);
 
 						output.value += `${data.id},${data.author},${data.comment}\n`;
 
@@ -62,43 +67,27 @@
 			});
 		}
 
-		// scrap(api_key, "4wH878t78bw")
-		// .then(results=>{
-		// 	const output =  document.querySelector('textarea#Output');
-		// 	output.value = '';
-		// 	for(let comment of results){
-		// 		const id = comment.id;
-		// 		const author = comment.author;
-		//		const value = comment.comment.replace(/\,/g,"\\\,");
-		// 		output.value += `${id},${author},${value}\n`;
-		// 	}
-		// });
-
 		function scrapYoutube(){
-			const videoId = document.querySelector('input#videoId').value;
+			const videoIn = document.querySelector('input#videoId').value;
 			const output =  document.querySelector('textarea#Output');
 			output.value = "";	
+			let videoId = null;
+			if(videoIn.lastIndexOf('youtube.com/watch') < 0) videoId = videoIn;
+			else videoId = videoIn.match(/v=((?:(?!\&).)*)/g)[0].substring(2);
 			scrap(api_key, videoId)
-			// .then(results=>{
-			// 	console.log(results);
-			// 	const output =  document.querySelector('textarea#Output');
-			// 	output.value = JSON.stringify(results);
-			// });
-			.then(downloadCSV)
-			// .then(downloadJSON)
-			// .then(console.log)
-			.catch(console.error);
+			.then(ProcessData)
+			.catch(alert);
 		}
 
-		function downloadJSON(obj){
+		function DownloadJSON(obj){
 			let a = document.createElement('a');
-			const blob = new Blob([JSON.stringify(obj)], {type:'application/json'});
+			const blob = new Blob([JSON.stringify(obj).replace(/\\\"/g,"\"").replace(/\\\,/g,"\,")], {type:'application/json'});
 			a.href = URL.createObjectURL(blob);
 			a.download = "Result.json";
 			a.click();
 		}
 
-		function downloadCSV(obj){
+		function DownloadCSV(obj){
 			let a = document.createElement('a');
 			let blob;
 			if(obj instanceof Array){
@@ -120,6 +109,15 @@
 				a.download = "Result.csv";
 				a.click();
 			}
+		}
+
+		function ProcessData(results){
+			const csv = document.querySelector("input[type=checkbox]#csv");
+			const json = document.querySelector("input[type=checkbox]#json");
+
+			if(csv && csv.checked) DownloadCSV(results);
+			if(json && json.checked) DownloadJSON(results);
+			console.log(`Done! Got ${results.length} items`);
 		}
 	</script>
 </body>
