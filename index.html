@@ -12,7 +12,7 @@
 		<input id="json" type="checkbox" name="json"><label for="json">Download JSON</label><br>
 		<button onclick="scrapYoutube()">Scrap YouTube!</button><br>
 		<input id="Progress" type="range" min=0 name="progress"><br>
-		<span id="DCur"></span><span id="DTot"></span><br>
+		<span id="DCur"></span>/<span id="DTot"></span><br>
 		<textarea id="Output" cols=100 rows=200></textarea>
 	</div>
 	<script type="text/javascript">
@@ -44,7 +44,7 @@
 						const data = {
 							id: item.id,
 							author: item.snippet.topLevelComment.snippet.authorDisplayName,
-							comment: item.snippet.topLevelComment.snippet.textOriginal.replace(/\"/g,"\\\"").replace(/\,/g,"\\\,")
+							comment: item.snippet.topLevelComment.snippet.textOriginal.replace(/\"/g,"\\\"").replace(/\,/g,"\\\,").replace(/\n/g," ")
 						};
 						let comment = new Comment(data.id, data.author, data.comment);
 						results.push(comment);
